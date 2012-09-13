@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.text.ClipboardManager;
 import android.view.Menu;
 import android.view.View;
@@ -23,6 +24,7 @@ public class CalculatorActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        //readPreferences();
     }
 
     @Override
@@ -32,6 +34,12 @@ public class CalculatorActivity extends Activity {
     }
     
     public void numKeyOnClick(View v){
+    	/*
+    	((Vibrator)getSystemService(VIBRATOR_SERVICE)).vibrate(50);
+    	TextView sp = (TextView)findViewById(R.id.subPanel);
+    	String strSp = sp.getText().toString();
+    	if(strSp.indexOf("=")==strSp.length()-1)sp.setText("");
+    	*/
     	String strInKey = (String) ((Button)v).getText();
     	
     	if(strInKey.equals(".")){
@@ -40,7 +48,6 @@ public class CalculatorActivity extends Activity {
     		}else{
     			if(strTemp.indexOf(".")==-1){
     					strTemp=strTemp+".";
-    			
     			}
     		}
     	}else{
@@ -97,22 +104,23 @@ public class CalculatorActivity extends Activity {
 				strResult=doCalc();
 				showNuber(strResult);
 			}
-			else{
-				if(strTemp.length()>0){
-					strResult=strTemp;
-				}
-			}
-			strTemp="";
-			
-			if (v.getId()==R.id.keypadEq){
-				operator=0;
-			}else{
-				operator=v.getId();
+		}
+	    else{
+			if(strTemp.length()>0){
+				strResult=strTemp;
 			}
 		}
+		strTemp="";
+			
+		if (v.getId()==R.id.keypadEq){
+			operator=0;
+		}else{
+			operator=v.getId();
+		}
+	}
 		
 	
-	}
+	
 
 	private String doCalc() {
 		BigDecimal bd1=new BigDecimal (this.strResult);
@@ -123,7 +131,43 @@ public class CalculatorActivity extends Activity {
 		case R.id.keypadAdd:
 			result=bd1.add(bd2);
 			break;
+		case R.id.keypadSub:
+			result=bd1.subtract(bd2);
+			break;
+		case R.id.keypadMulti:
+			result=bd1.multiply(bd2);
+			break;
+		case R.id.keypadDiv:
+			if(!bd2.equals(BigDecimal.ZERO)){
+				result=bd1.divide(bd2,12,3);
+			}else{
+				Toast toast = Toast.makeText(this, R.string.toast_div_by_zero, 1000);
+				toast.show();
+			}
+			break;
 		}
-		return null;
+		if(result.toString().indexOf(".")>=0){
+			return result.toString().replace("\\.0+$|0+$", "");
+		}else{
+			return result.toString();
+		}
+		//return null;
+	}
+	
+	void writePreferences(){//ƒŠƒXƒg‚P‚Q
+		SharedPreferences prefs = getSharedPreferences("ClacPrefs",MODE_PRIVATE);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString("strTemp",strTemp);
+		editor.putInt("operator",operator);
+		editor.putString("strDisplay", ((TextView)findViewById(R.id.displayPanel)).getText().toString());
+		editor.commit();
+	}
+	
+	void readPreferences(){
+		SharedPreferences prefs = getSharedPreferences("CalcPrefs",MODE_PRIVATE);
+		strTemp = prefs.getString("strTemp","");
+		strResult = prefs.getString("strReslut","0");
+		operator=prefs.getInt("operator", 0);
+		((TextView)findViewById(R.id.displayPanel)).setText(prefs.getString("strDisplay", "0"));
 	}
 }
